@@ -392,7 +392,10 @@ const NUM_ROWS = 5;
 const PANEL_HEIGHT_CM = 20;
 const PANEL_TILT_DEG = 30;
 let balconyLengthM = 4.78;
-let NAMEPLATE_PER_ROW = Math.round(balconyLengthM / 0.32) * 25; // ~32cm per panel, 25W each
+const PANEL_WIDTH_CM = 32;
+const CELL_EFFICIENCY = 0.22; // 22% — typical monocrystalline
+const WATTS_PER_PANEL = Math.round((PANEL_HEIGHT_CM / 100) * (PANEL_WIDTH_CM / 100) * 1000 * CELL_EFFICIENCY); // ~14W
+let NAMEPLATE_PER_ROW = Math.round(balconyLengthM / (PANEL_WIDTH_CM / 100)) * WATTS_PER_PANEL;
 const PANEL_THICKNESS = 5;
 const BASE_PROTRUSION_CM = PANEL_HEIGHT_CM * Math.sin(PANEL_TILT_DEG * Math.PI / 180); // ~9cm
 const ROW_HEIGHT_CM = PANEL_HEIGHT_CM * Math.cos(PANEL_TILT_DEG * Math.PI / 180); // ~15.6cm
@@ -498,7 +501,7 @@ let latitude = 45;
 
 function onBalconyLength(val) {
   balconyLengthM = parseFloat(val);
-  NAMEPLATE_PER_ROW = Math.round(balconyLengthM / 0.32) * 25;
+  NAMEPLATE_PER_ROW = Math.round(balconyLengthM / (PANEL_WIDTH_CM / 100)) * WATTS_PER_PANEL;
   document.getElementById('balconyValue').textContent = balconyLengthM.toFixed(1) + 'm';
   document.getElementById('balconyLabel').textContent = balconyLengthM.toFixed(1) + 'm';
   recalc();
