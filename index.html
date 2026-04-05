@@ -272,7 +272,7 @@
 
 <div class="container">
   <h1>Balcony Solar Shading</h1>
-  <p class="subtitle">Your 4.78m balcony at <span id="latLabel">45°N</span> · 5 rows · stepped pyramid offset</p>
+  <p class="subtitle">Your <span id="balconyLabel">4.78m</span> balcony at <span id="latLabel">45°N</span> · 5 rows · stepped pyramid offset</p>
 
   <div class="month-bar" id="monthBar"></div>
 
@@ -357,6 +357,12 @@
   <div class="bottom-layout">
     <div class="breakdown">
       <div class="breakdown-title">Output by Row (parallel wired)</div>
+      <div class="lat-row" style="margin-top:0; padding-top:0; border-top:none; margin-bottom:12px;">
+        <span class="slider-label">Balcony<br>length</span>
+        <input type="range" id="balconySlider" min="1" max="10" step="0.1" value="4.78"
+               oninput="onBalconyLength(this.value)">
+        <span class="lat-value" id="balconyValue" style="min-width:52px">4.78m</span>
+      </div>
       <div id="rowBars"></div>
       <div class="total-row">
         <span class="total-label">Total effective output</span>
@@ -379,7 +385,8 @@ let SUN_ELEVATIONS = [24, 31, 40, 51, 60, 68, 65, 57, 47, 36, 27, 22];
 const NUM_ROWS = 5;
 const PANEL_HEIGHT_CM = 20;
 const PANEL_TILT_DEG = 30;
-const NAMEPLATE_PER_ROW = 375;
+let balconyLengthM = 4.78;
+let NAMEPLATE_PER_ROW = Math.round(balconyLengthM / 0.32) * 25; // ~32cm per panel, 25W each
 const PANEL_THICKNESS = 5;
 const BASE_PROTRUSION_CM = PANEL_HEIGHT_CM * Math.sin(PANEL_TILT_DEG * Math.PI / 180); // ~9cm
 const ROW_HEIGHT_CM = PANEL_HEIGHT_CM * Math.cos(PANEL_TILT_DEG * Math.PI / 180); // ~15.6cm
@@ -482,6 +489,15 @@ const ORIENT_FACTORS = {
 };
 let orientation = 'S';
 let latitude = 45;
+
+function onBalconyLength(val) {
+  balconyLengthM = parseFloat(val);
+  NAMEPLATE_PER_ROW = Math.round(balconyLengthM / 0.32) * 25;
+  document.getElementById('balconyValue').textContent = balconyLengthM.toFixed(1) + 'm';
+  document.getElementById('balconyLabel').textContent = balconyLengthM.toFixed(1) + 'm';
+  recalc();
+  updateYearly();
+}
 
 function onLatitude(val) {
   latitude = parseInt(val);
