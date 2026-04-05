@@ -120,7 +120,7 @@
   }
   canvas {
     width: 145%; height: auto; display: block; border-radius: 10px;
-    margin-top: -18%; margin-left: -2%;
+    margin-top: -42%; margin-left: -2%;
   }
 
   .breakdown {
@@ -877,7 +877,7 @@ function draw() {
   ctx.fillStyle = isLight ? '#448844' : 'rgba(91,219,138,0.5)';
   ctx.font = '500 12px "JetBrains Mono", monospace';
   ctx.textAlign = 'right';
-  ctx.fillText(`(${gvWatts}W — vertical, 0cm lip)`, gvTL.x - 10, (gvTL.y + gvBL.y) / 2 + 4);
+  ctx.fillText(`(${gvWatts}W — vertical)`, gvTL.x - 10, (gvTL.y + gvBL.y) / 2 + 4);
 
   // Bracket lines from railing to each panel (mounting arms)
   for (let i = 0; i < NUM_ROWS; i++) {
