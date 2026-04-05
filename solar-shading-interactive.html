@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balcony Solar Shading by Month</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0c0e14; --bg2: #181a22; --bg3: #111320; --bg4: #252830;
+    --border: #2a2d38; --border2: #1e2030;
+    --text: #e0e0e8; --text2: #888; --text3: #555; --text4: #444;
+    --heading: #f0f0f5;
+    --card-bg: #181a22; --insight-bg: linear-gradient(135deg, #1a1520, #15202a);
+    --insight-border: #2a2540;
+    --slider-track: #252830; --slider-border: #0c0e14;
+    --canvas-sky1: 40,60,120; --canvas-sky2: 20,25,40; --canvas-bg: #0c0e14;
+    --canvas-ground: #2a2d38; --canvas-floor: #1a1c25;
+    --railing: #777; --bracket: #444; --mount: #555;
+    --acc-yellow: #ffd96b; --acc-green: #5bdb8a; --acc-red: #ff6b8a;
+    --acc-blue: #5bb8ff; --acc-midyellow: #d4b840;
+  }
+
+  body.light {
+    --bg: #f5f5f0; --bg2: #ffffff; --bg3: #f0f0ec; --bg4: #e0ddd5;
+    --border: #d5d0c8; --border2: #ddd8d0;
+    --text: #2a2520; --text2: #777; --text3: #999; --text4: #aaa;
+    --heading: #1a1510;
+    --card-bg: #ffffff; --insight-bg: linear-gradient(135deg, #f0eef5, #eef3f5);
+    --insight-border: #d5d0e0;
+    --slider-track: #e0ddd5; --slider-border: #ffffff;
+    --canvas-sky1: 180,200,240; --canvas-sky2: 220,225,235; --canvas-bg: #eaeae5;
+    --canvas-ground: #ccc8c0; --canvas-floor: #e5e2da;
+    --railing: #888; --bracket: #aaa; --mount: #999;
+    --acc-yellow: #b8860b; --acc-green: #1a8a4a; --acc-red: #c93555;
+    --acc-blue: #1a6ab5; --acc-midyellow: #8a6a08;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  h1 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 4px; color: var(--heading); }
+  .subtitle { text-align: center; font-size: 12px; color: var(--text3); margin-bottom: 20px; }
+
+  .month-bar { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+
+  .month-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    padding: 6px 10px; border: 1px solid var(--border); background: var(--bg2); color: var(--text2);
+    border-radius: 6px; cursor: pointer; transition: all 0.25s ease; user-select: none;
+  }
+  .month-btn:hover { border-color: var(--acc-yellow); color: var(--text); }
+  .month-btn.active { background: var(--acc-yellow); color: #1a1a1a; border-color: var(--acc-yellow); font-weight: 600; }
+
+  .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; }
+
+  .play-btn {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 8px 20px; border: 1px solid var(--acc-yellow); background: transparent; color: var(--acc-yellow);
+    border-radius: 20px; cursor: pointer; transition: all 0.25s ease;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .play-btn:hover, .play-btn.playing { background: var(--acc-yellow); color: #1a1a1a; }
+
+  /* Slider */
+  .slider-section {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 16px; transition: background 0.4s, border-color 0.4s;
+  }
+  .slider-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+  }
+  .slider-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .slider-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; color: var(--acc-blue);
+  }
+  .slider-wrap { position: relative; height: 36px; display: flex; align-items: center; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
+    background: var(--slider-track); border-radius: 3px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 24px; height: 24px;
+    background: var(--acc-blue); border-radius: 50%; cursor: pointer;
+    border: 3px solid var(--slider-border); box-shadow: 0 0 8px rgba(91,184,255,0.3);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 24px; height: 24px; background: var(--acc-blue); border-radius: 50%;
+    cursor: pointer; border: 3px solid var(--slider-border);
+  }
+  .slider-ticks {
+    display: flex; justify-content: space-between; margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text3);
+  }
+
+  .stats { display: flex; justify-content: center; gap: 18px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; transition: color 0.6s ease; }
+  .stat-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .scene-wrapper {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 16px;
+    padding: 12px; margin-bottom: 16px; overflow: hidden; transition: background 0.4s, border-color 0.4s;
+  }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; }
+
+  .breakdown {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    transition: background 0.4s, border-color 0.4s;
+  }
+  .breakdown-title { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .row-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; height: 24px; }
+  .row-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); min-width: 44px; }
+  .row-track { flex: 1; height: 10px; background: var(--bg4); border-radius: 5px; overflow: hidden; }
+  .row-fill { height: 100%; border-radius: 5px; transition: width 0.8s cubic-bezier(0.25,0.46,0.45,0.94), background 0.8s ease; }
+  .row-watts { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; min-width: 50px; text-align: right; }
+
+  .total-row {
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .total-label { font-size: 12px; font-weight: 600; color: var(--text2); }
+  .total-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; transition: color 0.6s ease; }
+  .wiring-note { font-size: 11px; color: var(--text3); text-align: center; margin-top: 10px; font-style: italic; }
+
+  .insight-box {
+    background: var(--insight-bg); border: 1px solid var(--insight-border);
+    border-radius: 12px; padding: 16px; margin-top: 16px; transition: border-color 0.4s;
+  }
+  .insight-box h3 { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .insight-box p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  /* Yearly production box */
+  .yearly-box {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-top: 16px; text-align: center; transition: background 0.4s, border-color 0.4s;
+  }
+  .yearly-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  .yearly-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .yearly-row:last-child { border-bottom: none; }
+  .yearly-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .yearly-config { flex: 1; font-size: 12px; color: var(--text); line-height: 1.4; }
+  .yearly-config-sub { font-size: 10px; color: var(--text3); }
+  .yearly-kwh {
+    font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700;
+    text-align: right; min-width: 80px;
+  }
+  .yearly-eur {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text3); text-align: right; min-width: 55px;
+  }
+
+  /* Theme toggle */
+  .theme-btn {
+    font-family: 'DM Sans', sans-serif; font-size: 18px;
+    width: 40px; height: 40px; border: 1px solid var(--border); background: var(--bg2);
+    border-radius: 50%; cursor: pointer; transition: all 0.25s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .theme-btn:hover { border-color: var(--acc-yellow); }
+
+  /* Orientation selector */
+  .orient-section {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 16px; transition: background 0.4s, border-color 0.4s;
+  }
+  .orient-header {
+    font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .orient-factor {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600;
+  }
+  .orient-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    max-width: 220px; margin: 0 auto;
+  }
+  .orient-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+    padding: 8px 4px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text2); border-radius: 6px; cursor: pointer;
+    transition: all 0.25s ease; user-select: none; text-align: center;
+  }
+  .orient-btn:hover { border-color: var(--acc-blue); color: var(--text); }
+  .orient-btn.active {
+    background: var(--acc-blue); color: #fff; border-color: var(--acc-blue); font-weight: 600;
+  }
+  .orient-spacer { visibility: hidden; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Balcony Solar Shading</h1>
+  <p class="subtitle">Your 4.78m balcony in Romania · 5 rows · stepped pyramid offset</p>
+
+  <div class="month-bar" id="monthBar"></div>
+
+  <div class="controls">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">
+      <span id="playIcon">▶</span> <span id="playText">Play Year</span>
+    </button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">
+      <span id="themeIcon">☀</span>
+    </button>
+  </div>
+
+  <div class="slider-section">
+    <div class="slider-header">
+      <span class="slider-label">Max lip (bottom row)</span>
+      <span class="slider-value" id="sliderValue">10cm</span>
+    </div>
+    <div class="slider-wrap">
+      <input type="range" id="lipSlider" min="10" max="100" step="5" value="10" oninput="onSlider(this.value)">
+    </div>
+    <div class="slider-ticks">
+      <span>10cm</span><span>25</span><span>50</span><span>75</span><span>100cm</span>
+    </div>
+  </div>
+
+  <div class="orient-section">
+    <div class="orient-header">
+      <span>Balcony faces</span>
+      <span class="orient-factor" id="orientFactor">100%</span>
+    </div>
+    <div class="orient-grid" id="orientGrid">
+      <button class="orient-btn" data-dir="NW">NW</button>
+      <button class="orient-btn" data-dir="N">N</button>
+      <button class="orient-btn" data-dir="NE">NE</button>
+      <button class="orient-btn" data-dir="W">W</button>
+      <button class="orient-spacer"></button>
+      <button class="orient-btn" data-dir="E">E</button>
+      <button class="orient-btn" data-dir="SW">SW</button>
+      <button class="orient-btn active" data-dir="S">S</button>
+      <button class="orient-btn" data-dir="SE">SE</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="sunAngle" style="color:#ffd96b">68°</div>
+      <div class="stat-label">Sun Elev.</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="shadowDrop" style="color:#ff6b8a">25cm</div>
+      <div class="stat-label">Shadow Drop</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="totalOutput" style="color:#5bdb8a">800W</div>
+      <div class="stat-label">Effective</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="efficiency" style="color:#5bb8ff">43%</div>
+      <div class="stat-label">Efficiency</div>
+    </div>
+  </div>
+
+  <div class="scene-wrapper">
+    <canvas id="scene" width="1200" height="750"></canvas>
+  </div>
+
+  <div class="breakdown">
+    <div class="breakdown-title">Output by Row (parallel wired)</div>
+    <div id="rowBars"></div>
+    <div class="total-row">
+      <span class="total-label">Total effective output</span>
+      <span class="total-value" id="totalWatts">800W</span>
+    </div>
+    <div class="wiring-note">Rows wired in parallel — each row contributes independently</div>
+  </div>
+
+  <div class="insight-box">
+    <h3 id="insightTitle" style="color:#ffd96b">Insight</h3>
+    <p id="insightText"></p>
+  </div>
+
+  <div class="yearly-box">
+    <div class="yearly-label">Estimated Yearly Production</div>
+    <div id="yearlyTable"></div>
+  </div>
+</div>
+
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SUN_ELEVATIONS = [24, 31, 40, 51, 60, 68, 65, 57, 47, 36, 27, 22];
+
+const NUM_ROWS = 5;
+const PANEL_HEIGHT_CM = 20;
+const PANEL_TILT_DEG = 30;
+const NAMEPLATE_PER_ROW = 375;
+const PANEL_THICKNESS = 5;
+const BASE_PROTRUSION_CM = PANEL_HEIGHT_CM * Math.sin(PANEL_TILT_DEG * Math.PI / 180); // ~9cm
+const ROW_HEIGHT_CM = PANEL_HEIGHT_CM * Math.cos(PANEL_TILT_DEG * Math.PI / 180); // ~15.6cm
+
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+
+// Average peak sun hours per day for south-facing ~30° tilt at 45°N Romania
+const PEAK_SUN_HOURS = [1.5, 2.2, 3.3, 4.5, 5.2, 5.6, 5.4, 4.8, 3.9, 2.8, 1.7, 1.2];
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+// Ghost single panel A: realistic 15° from vertical
+const GHOST_TILT_DEG = 15;
+const GHOST_PANEL_CM = 100;
+const GHOST_PROTRUSION_CM = GHOST_PANEL_CM * Math.sin(GHOST_TILT_DEG * Math.PI / 180); // ~26cm
+const GHOST_VERT_CM = GHOST_PANEL_CM * Math.cos(GHOST_TILT_DEG * Math.PI / 180); // ~96.6cm
+
+// Ghost single panel B: fully vertical (0° tilt), flush against railing
+const GHOST_V_TILT_DEG = 0;
+const GHOST_V_PROTRUSION_CM = 0;
+const GHOST_V_VERT_CM = 100;
+
+// Tilt correction for 15° ghost: cos(θ - 75°) / cos(θ - 60°)
+const GHOST_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
+  const smallPanelAngle = (elev - 60) * Math.PI / 180;
+  const ghostAngle = (elev - 75) * Math.PI / 180;
+  const ratio = Math.cos(ghostAngle) / Math.cos(smallPanelAngle);
+  return Math.max(0, Math.min(1.05, ratio));
+});
+
+// Tilt correction for vertical ghost: cos(θ - 90°) / cos(θ - 60°)
+const GHOST_V_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
+  const smallPanelAngle = (elev - 60) * Math.PI / 180;
+  const vertAngle = (elev - 90) * Math.PI / 180;
+  const ratio = Math.cos(vertAngle) / Math.cos(smallPanelAngle);
+  return Math.max(0, Math.min(1.05, ratio));
+});
+
+let isLight = false;
+
+// Orientation factors — annual yield relative to south-facing at 45°N
+const ORIENT_FACTORS = {
+  S: 1.00, SW: 0.87, SE: 0.87,
+  W: 0.65, E: 0.65,
+  NW: 0.45, NE: 0.45, N: 0.35
+};
+let orientation = 'S';
+
+function setOrientation(dir) {
+  orientation = dir;
+  document.querySelectorAll('.orient-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.dir === dir)
+  );
+  const pct = Math.round(ORIENT_FACTORS[dir] * 100);
+  const factorEl = document.getElementById('orientFactor');
+  factorEl.textContent = pct + '% sun';
+  factorEl.style.color = pct > 80 ? acc('green') : pct > 55 ? acc('yellow') : acc('red');
+  recalc();
+  updateYearly();
+}
+
+let currentMonth = 5;
+let isPlaying = false;
+let playInterval = null;
+let maxLipCm = 10;
+
+// Per-row offsets from the railing (additional offset, not counting panel tilt)
+function calcRowOffsets(maxLip) {
+  const offsets = [];
+  for (let i = 0; i < NUM_ROWS; i++) {
+    // Row 0 (top) = 0 extra offset, Row 4 (bottom) = maxLip - BASE_PROTRUSION_CM
+    const extraOffset = Math.max(0, (maxLip - BASE_PROTRUSION_CM) * (i / (NUM_ROWS - 1)));
+    offsets.push(extraOffset);
+  }
+  return offsets;
+}
+
+// Each row's total lip = offset + base panel protrusion
+function calcRowLips(maxLip) {
+  const offsets = calcRowOffsets(maxLip);
+  return offsets.map(o => o + BASE_PROTRUSION_CM);
+}
+
+// CORRECTED shading: shadow traverses a TILTED face, not a vertical wall
+// Shadow fraction = H * tan(θ) / (ROW_HEIGHT + BASE_PROTRUSION * tan(θ))
+// where H = effective overhang of the row above
+// This accounts for the shadow needing to cross both the horizontal and vertical
+// extent of the slanted panel face
+function calcShading(sunElevDeg, maxLip) {
+  const sunRad = sunElevDeg * Math.PI / 180;
+  const tanSun = Math.tan(sunRad);
+  const lips = calcRowLips(maxLip);
+  const offsets = calcRowOffsets(maxLip);
+
+  const shadowDropFromTop = lips[0] * tanSun;
+
+  const rowSun = [];
+  for (let i = 0; i < NUM_ROWS; i++) {
+    if (i === 0) {
+      rowSun.push(1.0);
+    } else {
+      const H = Math.max(0, lips[i - 1] - offsets[i]); // effective overhang
+      if (H <= 0) {
+        rowSun.push(1.0); // row is further out than the lip above — no shadow
+      } else {
+        const shadeFraction = Math.min(0.95, (H * tanSun) / (ROW_HEIGHT_CM + BASE_PROTRUSION_CM * tanSun));
+        rowSun.push(Math.max(0.05, 1 - shadeFraction));
+      }
+    }
+  }
+
+  return { rowSun, shadowDropCm: shadowDropFromTop };
+}
+
+let anim = { sunAngle: 68, rowSun: [1,1,1,1,1], shadowDropCm: 25, rowOffsets: [0,0,0,0,0], rowLips: [9,9,9,9,9] };
+let target = { ...anim, rowSun: [...anim.rowSun], rowOffsets: [...anim.rowOffsets], rowLips: [...anim.rowLips] };
+
+function recalc() {
+  const result = calcShading(SUN_ELEVATIONS[currentMonth], maxLipCm);
+  target.sunAngle = SUN_ELEVATIONS[currentMonth];
+  target.rowSun = result.rowSun;
+  target.shadowDropCm = result.shadowDropCm;
+  target.rowOffsets = calcRowOffsets(maxLipCm);
+  target.rowLips = calcRowLips(maxLipCm);
+}
+
+function setMonth(m) {
+  currentMonth = m;
+  document.querySelectorAll('.month-btn').forEach((btn, i) => btn.classList.toggle('active', i === m));
+  recalc();
+}
+
+function onSlider(val) {
+  maxLipCm = parseInt(val);
+  document.getElementById('sliderValue').textContent = maxLipCm + 'cm';
+  recalc();
+  updateYearly();
+}
+
+function calcYearlyKwh(maxLip) {
+  let totalKwh = 0;
+  const oFactor = ORIENT_FACTORS[orientation];
+  for (let m = 0; m < 12; m++) {
+    const result = calcShading(SUN_ELEVATIONS[m], maxLip);
+    const effectiveW = result.rowSun.reduce((s, f) => s + NAMEPLATE_PER_ROW * f, 0);
+    const monthKwh = (effectiveW / 1000) * PEAK_SUN_HOURS[m] * DAYS_IN_MONTH[m] * oFactor;
+    totalKwh += monthKwh;
+  }
+  return totalKwh;
+}
+
+function updateYearly() {
+  const kwh = calcYearlyKwh(maxLipCm);
+  const g15Kwh = calcGhostYearly();
+  const gvKwh = calcGhostVertYearly();
+
+  const rows = [
+    {
+      color: acc('green'),
+      name: `Stepped ${PANEL_TILT_DEG}° panels`,
+      sub: `${maxLipCm}cm max lip · facing ${orientation}`,
+      kwh: kwh,
+    },
+    {
+      color: acc('yellow'),
+      name: `Single panel ${GHOST_TILT_DEG}° tilt`,
+      sub: `${Math.round(GHOST_PROTRUSION_CM)}cm protrusion · facing ${orientation}`,
+      kwh: g15Kwh,
+    },
+    {
+      color: isLight ? '#448844' : '#5bdb8a',
+      name: 'Vertical panel',
+      sub: `0cm protrusion · facing ${orientation}`,
+      kwh: gvKwh,
+    },
+  ];
+
+  // Sort best to worst
+  rows.sort((a, b) => b.kwh - a.kwh);
+
+  document.getElementById('yearlyTable').innerHTML = rows.map(r => {
+    const eur = Math.round(r.kwh * 0.25);
+    return `<div class="yearly-row">
+      <div class="yearly-dot" style="background:${r.color}"></div>
+      <div class="yearly-config">
+        ${r.name}
+        <div class="yearly-config-sub">${r.sub}</div>
+      </div>
+      <div class="yearly-kwh" style="color:${r.color}">${Math.round(r.kwh)} kWh</div>
+      <div class="yearly-eur">~€${eur}/yr</div>
+    </div>`;
+  }).join('');
+}
+
+// Ghost 15° panel: no shading, worse tilt
+function calcGhostYearly() {
+  let total = 0;
+  const maxW = NAMEPLATE_PER_ROW * NUM_ROWS;
+  const oFactor = ORIENT_FACTORS[orientation];
+  for (let m = 0; m < 12; m++) {
+    total += (maxW / 1000) * PEAK_SUN_HOURS[m] * DAYS_IN_MONTH[m] * GHOST_TILT_CORRECTION[m] * oFactor;
+  }
+  return total;
+}
+
+// Ghost vertical panel: no shading, worst tilt
+function calcGhostVertYearly() {
+  let total = 0;
+  const maxW = NAMEPLATE_PER_ROW * NUM_ROWS;
+  const oFactor = ORIENT_FACTORS[orientation];
+  for (let m = 0; m < 12; m++) {
+    total += (maxW / 1000) * PEAK_SUN_HOURS[m] * DAYS_IN_MONTH[m] * GHOST_V_TILT_CORRECTION[m] * oFactor;
+  }
+  return total;
+}
+
+function toggleTheme() {
+  isLight = !isLight;
+  document.body.classList.toggle('light', isLight);
+  document.getElementById('themeIcon').textContent = isLight ? '🌙' : '☀';
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+// Theme-aware accent colors
+function acc(name) {
+  const dark = { yellow: '#ffd96b', green: '#5bdb8a', red: '#ff6b8a', blue: '#5bb8ff', midyellow: '#d4b840' };
+  const light = { yellow: '#b8860b', green: '#1a8a4a', red: '#c93555', blue: '#1a6ab5', midyellow: '#8a6a08' };
+  return isLight ? light[name] : dark[name];
+}
+function sunColor(f) { return f > 0.8 ? acc('yellow') : f > 0.5 ? acc('midyellow') : f > 0.3 ? '#8a7a3a' : (isLight ? '#b0a880' : '#4a4530'); }
+function barColor(f) {
+  if (isLight) return `rgb(${Math.round(lerp(180,26,f))},${Math.round(lerp(100,138,f))},${Math.round(lerp(80,74,f))})`;
+  return `rgb(${Math.round(lerp(80,91,f))},${Math.round(lerp(60,219,f))},${Math.round(lerp(50,138,f))})`;
+}
+function textColor(f) { return f > 0.7 ? acc('green') : f > 0.4 ? acc('midyellow') : acc('red'); }
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Theme colors
+  const bgCol = isLight ? '#eaeae5' : '#0c0e14';
+  const skyRgb1 = isLight ? '180,200,240' : '40,60,120';
+  const skyRgb2 = isLight ? '220,225,235' : '20,25,40';
+  const groundCol = isLight ? '#ccc8c0' : '#2a2d38';
+  const floorCol = isLight ? '#e5e2da' : '#1a1c25';
+  const railCol = isLight ? '#888' : '#777';
+  const bracketCol = isLight ? '#aaa' : '#444';
+  const mountCol = isLight ? '#999' : '#555';
+  const labelCol = isLight ? '#777' : '#555';
+  const dimCol = isLight ? '#aaa' : '#444';
+  const panelBack = isLight ? '#ccc' : '#222';
+  const panelStrokeDim = isLight ? '#999' : '#555';
+  const panelGridBright = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.2)';
+  const panelGridDim = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+  const sunTextCol = isLight ? '#665500' : '#333';
+
+  const skyB = lerp(0.08, 0.25, (anim.sunAngle - 20) / 50);
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, `rgba(${skyRgb1}, ${skyB})`);
+  grad.addColorStop(0.5, `rgba(${skyRgb2}, ${skyB * 0.4})`);
+  grad.addColorStop(1, bgCol);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  const sunAngleRad = anim.sunAngle * Math.PI / 180;
+
+  // Balcony geometry
+  const railX = 160;
+  const railBot = H - 90;
+  const railTop = railBot - 340;
+  const railH = railBot - railTop;
+  const sc = railH / 100;
+
+  const tiltRad = PANEL_TILT_DEG * Math.PI / 180;
+  const pVertPx = PANEL_HEIGHT_CM * Math.cos(tiltRad) * sc;
+  const basePProtPx = BASE_PROTRUSION_CM * sc;
+
+  // Sun
+  const sunR = 38;
+  const pcX = railX + 50;
+  const pcY = (railTop + railBot) / 2;
+  const sunDist = 450;
+  const sunX = pcX + sunDist * Math.cos(sunAngleRad);
+  const sunY = Math.max(sunR + 10, pcY - sunDist * Math.sin(sunAngleRad));
+
+  const gG = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 160);
+  gG.addColorStop(0, 'rgba(255,217,107,0.3)');
+  gG.addColorStop(0.4, 'rgba(255,217,107,0.06)');
+  gG.addColorStop(1, 'rgba(255,217,107,0)');
+  ctx.fillStyle = gG;
+  ctx.beginPath(); ctx.arc(sunX, sunY, 160, 0, Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = acc('yellow');
+  ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = sunTextCol; ctx.font = '600 15px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+  ctx.fillText(`${Math.round(anim.sunAngle)}°`, sunX, sunY + 5);
+
+  // Ground & floor
+  ctx.strokeStyle = groundCol; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(30, railBot + 20); ctx.lineTo(W - 30, railBot + 20); ctx.stroke();
+  ctx.fillStyle = floorCol;
+  ctx.fillRect(30, railBot + 20, railX - 30, 35);
+  ctx.fillStyle = labelCol; ctx.font = '500 11px "DM Sans", sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Balcony', (30 + railX) / 2, railBot + 42);
+  ctx.fillStyle = dimCol;
+  ctx.fillText('Outside (south →)', railX + 250, railBot + 42);
+
+  // Railing
+  ctx.strokeStyle = railCol; ctx.lineWidth = 6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(railX, railBot + 20); ctx.lineTo(railX, railTop - 12); ctx.stroke();
+  ctx.lineWidth = 8;
+  ctx.beginPath(); ctx.moveTo(railX - 25, railTop - 12); ctx.lineTo(railX + 15, railTop - 12); ctx.stroke();
+
+  // Height label
+  ctx.fillStyle = labelCol; ctx.font = '500 12px "DM Sans", sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('1m', railX - 45, railTop + railH / 2);
+  ctx.strokeStyle = dimCol; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(railX - 60, railTop); ctx.lineTo(railX - 60, railBot); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Build panels with per-row offsets (stepped pyramid)
+  const panels = [];
+  for (let i = 0; i < NUM_ROWS; i++) {
+    const yTop = railTop + i * pVertPx + 8;
+    const yBot = yTop + pVertPx;
+    const offsetPx = anim.rowOffsets[i] * sc;
+
+    const tl = { x: railX + 3 + offsetPx, y: yTop };
+    const tr = { x: railX + 3 + offsetPx + PANEL_THICKNESS, y: yTop };
+    const bl = { x: railX + offsetPx + basePProtPx, y: yBot };
+    const br = { x: railX + offsetPx + basePProtPx + PANEL_THICKNESS, y: yBot };
+
+    panels.push({ yTop, yBot, tl, tr, bl, br, row: i, offsetPx, lipPx: anim.rowLips[i] * sc });
+  }
+
+  // Ghost single-piece panel for comparison (15° tilt, not affected by slider)
+  // 1m panel tilted at 15° from vertical: protrusion ~26cm, vertical ~96.6cm
+  const ghostProtPx = GHOST_PROTRUSION_CM * sc;
+  const ghostVertPx = GHOST_VERT_CM * sc;
+  const ghostTop = railTop + 8;
+  const ghostTL = { x: railX + 3, y: ghostTop };
+  const ghostBL = { x: railX + 3 + ghostProtPx, y: ghostTop + ghostVertPx };
+  const ghostBR = { x: railX + 3 + ghostProtPx + PANEL_THICKNESS, y: ghostTop + ghostVertPx };
+  const ghostTR = { x: railX + 3 + PANEL_THICKNESS, y: ghostTop };
+
+  // Draw ghost panel — dashed outline, semi-transparent fill
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = isLight ? '#aa8800' : acc('yellow');
+  ctx.beginPath();
+  ctx.moveTo(ghostTL.x, ghostTL.y); ctx.lineTo(ghostBL.x, ghostBL.y);
+  ctx.lineTo(ghostBR.x, ghostBR.y); ctx.lineTo(ghostTR.x, ghostTR.y);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = isLight ? '#aa8800' : acc('yellow');
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(ghostTL.x, ghostTL.y); ctx.lineTo(ghostBL.x, ghostBL.y);
+  ctx.lineTo(ghostBR.x, ghostBR.y); ctx.lineTo(ghostTR.x, ghostTR.y);
+  ctx.closePath(); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Ghost protrusion label
+  ctx.globalAlpha = 0.6;
+  ctx.strokeStyle = isLight ? '#aa8800' : acc('yellow');
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 3]);
+  const ghostIndY = ghostBL.y + 6;
+  ctx.beginPath(); ctx.moveTo(railX, ghostIndY); ctx.lineTo(ghostBL.x, ghostIndY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = isLight ? '#aa8800' : acc('yellow');
+  ctx.globalAlpha = 0.6;
+  ctx.font = '500 10px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${Math.round(GHOST_PROTRUSION_CM)}cm (single panel, ${GHOST_TILT_DEG}° tilt)`, (railX + ghostBL.x) / 2, ghostIndY + 12);
+  ctx.globalAlpha = 1;
+
+  // Ghost output label — full nameplate but reduced by tilt correction (worse angle)
+  const ghostCorrection = GHOST_TILT_CORRECTION[currentMonth];
+  const ghostWatts = Math.round(NAMEPLATE_PER_ROW * NUM_ROWS * ghostCorrection);
+  ctx.fillStyle = isLight ? '#887040' : 'rgba(255,217,107,0.5)';
+  ctx.font = '500 12px "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`(${ghostWatts}W — 15° tilt)`, ghostBR.x + 15, (ghostTL.y + ghostBL.y) / 2 + 4);
+
+  // Ghost B: fully vertical panel, flush against railing
+  const gvTop = railTop + 8;
+  const gvVertPx = GHOST_V_VERT_CM * sc;
+  const gvTL = { x: railX + 1, y: gvTop };
+  const gvTR = { x: railX + 1 + PANEL_THICKNESS, y: gvTop };
+  const gvBL = { x: railX + 1, y: gvTop + gvVertPx };
+  const gvBR = { x: railX + 1 + PANEL_THICKNESS, y: gvTop + gvVertPx };
+
+  // Draw vertical ghost — different dash pattern to distinguish
+  const gvCol = isLight ? '#448844' : '#5bdb8a';
+  ctx.globalAlpha = 0.10;
+  ctx.fillStyle = gvCol;
+  ctx.beginPath();
+  ctx.moveTo(gvTL.x, gvTL.y); ctx.lineTo(gvBL.x, gvBL.y);
+  ctx.lineTo(gvBR.x, gvBR.y); ctx.lineTo(gvTR.x, gvTR.y);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = gvCol;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 5]);
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(gvTL.x, gvTL.y); ctx.lineTo(gvBL.x, gvBL.y);
+  ctx.lineTo(gvBR.x, gvBR.y); ctx.lineTo(gvTR.x, gvTR.y);
+  ctx.closePath(); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  // Vertical ghost label — "0cm" protrusion
+  ctx.fillStyle = gvCol;
+  ctx.globalAlpha = 0.6;
+  ctx.font = '500 10px "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('0cm (vertical)', railX + 10, gvBL.y + 14);
+  ctx.globalAlpha = 1;
+
+  // Vertical ghost output
+  const gvCorrection = GHOST_V_TILT_CORRECTION[currentMonth];
+  const gvWatts = Math.round(NAMEPLATE_PER_ROW * NUM_ROWS * gvCorrection);
+  ctx.fillStyle = isLight ? '#448844' : 'rgba(91,219,138,0.5)';
+  ctx.font = '500 12px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(`(${gvWatts}W — vertical, 0cm lip)`, gvTL.x - 10, (gvTL.y + gvBL.y) / 2 + 4);
+
+  // Bracket lines from railing to each panel (mounting arms)
+  for (let i = 0; i < NUM_ROWS; i++) {
+    const p = panels[i];
+    if (p.offsetPx > 2) {
+      ctx.strokeStyle = bracketCol; ctx.lineWidth = 2;
+      const bracketY = (p.yTop + p.yBot) / 2;
+      ctx.beginPath(); ctx.moveTo(railX + 3, bracketY); ctx.lineTo(p.tl.x, bracketY); ctx.stroke();
+      ctx.fillStyle = mountCol;
+      ctx.fillRect(railX + 1, bracketY - 3, 4, 6);
+      ctx.fillRect(p.tl.x - 2, bracketY - 3, 4, 6);
+    }
+  }
+
+  // Background sun rays
+  ctx.globalAlpha = 0.07; ctx.strokeStyle = acc('yellow'); ctx.lineWidth = 1.5;
+  for (let r = 0; r < 14; r++) {
+    const oY = (r - 7) * 24;
+    const len = 1000;
+    ctx.beginPath(); ctx.moveTo(sunX, sunY + oY);
+    ctx.lineTo(sunX - len * Math.cos(sunAngleRad), sunY + oY + len * Math.sin(sunAngleRad));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Direct rays from sun to panels
+  for (let i = 0; i < NUM_ROWS; i++) {
+    const p = panels[i];
+    const f = anim.rowSun[i];
+    const fmX = (p.tl.x + p.bl.x) / 2 + PANEL_THICKNESS / 2;
+    const fmY = (p.tl.y + p.bl.y) / 2;
+
+    ctx.globalAlpha = f * 0.35; ctx.strokeStyle = acc('yellow'); ctx.lineWidth = 2;
+    for (let r = 0; r < 2; r++) {
+      const oy = (r - 0.5) * pVertPx * 0.3;
+      const tgtX = fmX + 5, tgtY = fmY + oy;
+      const dx = tgtX - sunX, dy = tgtY - sunY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const sx = sunX + (dx/dist)*(sunR+5), sy = sunY + (dy/dist)*(sunR+5);
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tgtX, tgtY); ctx.stroke();
+
+      const ang = Math.atan2(tgtY-sy, tgtX-sx);
+      ctx.fillStyle = acc('yellow'); ctx.beginPath();
+      ctx.moveTo(tgtX, tgtY);
+      ctx.lineTo(tgtX - 8*Math.cos(ang-0.3), tgtY - 8*Math.sin(ang-0.3));
+      ctx.lineTo(tgtX - 8*Math.cos(ang+0.3), tgtY - 8*Math.sin(ang+0.3));
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Shadow zones
+  for (let i = 0; i < NUM_ROWS - 1; i++) {
+    const p = panels[i];
+    const np = panels[i + 1];
+    const sf = 1 - anim.rowSun[i + 1];
+    if (sf > 0.08) {
+      const shadowDropPx = (anim.rowLips[i] - anim.rowOffsets[i+1]) * sc * Math.tan(sunAngleRad);
+      const shadowBot = Math.min(p.br.y + Math.max(0, shadowDropPx), np.br.y);
+
+      if (shadowBot > np.tl.y) {
+        ctx.globalAlpha = Math.min(sf * 0.6, 0.5);
+        const sGrad = ctx.createLinearGradient(0, np.tl.y, 0, shadowBot);
+        sGrad.addColorStop(0, 'rgba(0,0,0,0.8)');
+        sGrad.addColorStop(1, 'rgba(0,0,0,0.05)');
+        ctx.fillStyle = sGrad;
+        ctx.beginPath();
+        ctx.moveTo(np.tl.x, np.tl.y);
+        ctx.lineTo(np.bl.x + PANEL_THICKNESS, np.tl.y);
+        ctx.lineTo(np.bl.x + PANEL_THICKNESS, shadowBot);
+        ctx.lineTo(np.tl.x, shadowBot);
+        ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // Draw panels
+  for (let i = 0; i < NUM_ROWS; i++) {
+    const p = panels[i];
+    const f = anim.rowSun[i];
+    const col = sunColor(f);
+
+    // Panel body
+    ctx.fillStyle = col;
+    ctx.strokeStyle = f > 0.5 ? '#b8982a' : panelStrokeDim;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.tl.x, p.tl.y); ctx.lineTo(p.bl.x, p.bl.y);
+    ctx.lineTo(p.br.x, p.br.y); ctx.lineTo(p.tr.x, p.tr.y);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // Grid lines
+    ctx.strokeStyle = f > 0.5 ? panelGridBright : panelGridDim;
+    ctx.lineWidth = 0.7;
+    for (let g = 1; g < 5; g++) {
+      const t = g / 5;
+      ctx.beginPath();
+      ctx.moveTo(lerp(p.tl.x, p.bl.x, t), lerp(p.tl.y, p.bl.y, t));
+      ctx.lineTo(lerp(p.tr.x, p.br.x, t), lerp(p.tr.y, p.br.y, t));
+      ctx.stroke();
+    }
+
+    // Row label
+    ctx.fillStyle = textColor(f);
+    ctx.font = '600 13px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    const watts = Math.round(NAMEPLATE_PER_ROW * f);
+    const lipCm = Math.round(anim.rowLips[i]);
+    ctx.fillText(`R${i+1}: ${Math.round(f*100)}% → ${watts}W`, p.br.x + 20, (p.tl.y + p.bl.y) / 2 + 5);
+
+    // Per-row lip indicator — horizontal line from railing to the panel's bottom edge
+    const lipY = p.bl.y + 2;
+    ctx.strokeStyle = acc('blue');
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(railX, lipY); ctx.lineTo(p.bl.x, lipY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    // Lip label
+    ctx.fillStyle = acc('blue');
+    ctx.font = '500 10px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${lipCm}cm`, (railX + p.bl.x) / 2, lipY + 11);
+  }
+
+  // Max protrusion indicator at bottom
+  const lastP = panels[NUM_ROWS - 1];
+  const indY = lastP.br.y + 28;
+  ctx.strokeStyle = acc('blue'); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(railX, indY); ctx.lineTo(lastP.br.x, indY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(railX, indY-5); ctx.lineTo(railX, indY+5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lastP.br.x, indY-5); ctx.lineTo(lastP.br.x, indY+5); ctx.stroke();
+  ctx.fillStyle = acc('blue'); ctx.font = '500 11px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+  ctx.fillText(`${Math.round(anim.rowLips[NUM_ROWS-1])}cm max lip`, (railX + lastP.br.x) / 2, indY + 18);
+
+  // Sun arc
+  const acX = W - 180, acY = railBot + 20, acR = 90;
+  ctx.strokeStyle = 'rgba(255,217,107,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.arc(acX, acY, acR, -Math.PI, 0); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(acX-acR-10, acY); ctx.lineTo(acX+acR+10, acY); ctx.stroke();
+  const aRad = -anim.sunAngle * Math.PI / 180;
+  const asX = acX + acR * Math.cos(aRad), asY = acY + acR * Math.sin(aRad);
+  ctx.strokeStyle = 'rgba(255,217,107,0.4)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(acX, acY); ctx.lineTo(asX, asY); ctx.stroke();
+  ctx.fillStyle = acc('yellow');
+  ctx.beginPath(); ctx.arc(asX, asY, 6, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#555'; ctx.font = '500 9px "DM Sans", sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Noon elevation', acX, acY + 22);
+
+  // Labels
+  ctx.fillStyle = acc('yellow'); ctx.font = '700 22px "DM Sans", sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(MONTHS[currentMonth], 40, 38);
+  ctx.fillStyle = '#444'; ctx.font = '500 11px "DM Sans", sans-serif';
+  ctx.fillText('Side view — stepped pyramid', 40, 56);
+}
+
+function updateUI() {
+  const totalW = anim.rowSun.reduce((s, f) => s + Math.round(NAMEPLATE_PER_ROW * f), 0);
+  const maxW = NAMEPLATE_PER_ROW * NUM_ROWS;
+  const eff = Math.round((totalW / maxW) * 100);
+
+  document.getElementById('sunAngle').textContent = Math.round(anim.sunAngle) + '°';
+  document.getElementById('shadowDrop').textContent = Math.round(anim.shadowDropCm) + 'cm';
+  document.getElementById('totalOutput').textContent = totalW + 'W';
+  document.getElementById('efficiency').textContent = eff + '%';
+  document.getElementById('totalWatts').textContent = totalW + 'W';
+
+  const sd = anim.shadowDropCm;
+  document.getElementById('shadowDrop').style.color = sd > 20 ? acc('red') : sd > 10 ? acc('yellow') : acc('green');
+
+  const eC = eff > 75 ? acc('green') : eff > 50 ? acc('yellow') : acc('red');
+  ['totalOutput','efficiency','totalWatts'].forEach(id => document.getElementById(id).style.color = eC);
+
+  document.getElementById('rowBars').innerHTML = anim.rowSun.map((f, i) => {
+    const w = Math.round(NAMEPLATE_PER_ROW * f);
+    return `<div class="row-bar">
+      <span class="row-label">Row ${i+1}</span>
+      <div class="row-track"><div class="row-fill" style="width:${Math.round(f*100)}%;background:${barColor(f)}"></div></div>
+      <span class="row-watts" style="color:${textColor(f)}">${w}W</span>
+    </div>`;
+  }).join('');
+
+  // Insight
+  const angle = Math.round(anim.sunAngle);
+  const lip = Math.round(maxLipCm);
+  const titleEl = document.getElementById('insightTitle');
+  const textEl = document.getElementById('insightText');
+
+  if (eff > 85) {
+    titleEl.style.color = acc('green');
+    titleEl.textContent = '✓ Shading nearly eliminated';
+    textEl.textContent = `At ${lip}cm max lip, the stepped pyramid pushes each row far enough forward to clear the shadow of the row above. ${eff}% efficiency — the extra protrusion is doing its job. But your balcony now sticks out ${lip}cm at the bottom.`;
+  } else if (eff > 60) {
+    titleEl.style.color = acc('yellow');
+    titleEl.textContent = '⚖ Partial improvement';
+    textEl.textContent = `The ${lip}cm stepped offset helps the middle rows escape some shading, but the bottom rows are still catching shadows in ${angle > 50 ? 'summer' : 'this season'}. You could push the slider further, but each cm adds to how far the bottom row juts out.`;
+  } else if (angle > 50) {
+    titleEl.style.color = acc('red');
+    titleEl.textContent = '⚠ High sun, heavy shading';
+    textEl.textContent = `The ${angle}° summer sun hammers the lips with ${Math.round(sd)}cm shadow drops. At only ${lip}cm max offset, the lower rows can't escape. Try sliding the lip higher — you'll see the pyramid staircase push them into the clear.`;
+  } else {
+    titleEl.style.color = acc('green');
+    titleEl.textContent = '✓ Winter is kind to tight packing';
+    textEl.textContent = `Low ${angle}° sun barely creates any shadow (${Math.round(sd)}cm). Even at ${lip}cm lip, all rows get good sun. The tight packing tax is almost zero in winter — your main limit is just fewer daylight hours.`;
+  }
+}
+
+function tick() {
+  const sp = 0.08;
+  anim.sunAngle = Math.abs(anim.sunAngle - target.sunAngle) > 0.1 ? lerp(anim.sunAngle, target.sunAngle, sp) : target.sunAngle;
+  anim.shadowDropCm = Math.abs(anim.shadowDropCm - target.shadowDropCm) > 0.1 ? lerp(anim.shadowDropCm, target.shadowDropCm, sp) : target.shadowDropCm;
+  for (let i = 0; i < NUM_ROWS; i++) {
+    anim.rowSun[i] = Math.abs(anim.rowSun[i] - target.rowSun[i]) > 0.003 ? lerp(anim.rowSun[i], target.rowSun[i], sp) : target.rowSun[i];
+    anim.rowOffsets[i] = Math.abs(anim.rowOffsets[i] - target.rowOffsets[i]) > 0.1 ? lerp(anim.rowOffsets[i], target.rowOffsets[i], sp) : target.rowOffsets[i];
+    anim.rowLips[i] = Math.abs(anim.rowLips[i] - target.rowLips[i]) > 0.1 ? lerp(anim.rowLips[i], target.rowLips[i], sp) : target.rowLips[i];
+  }
+  draw(); updateUI();
+  requestAnimationFrame(tick);
+}
+
+function togglePlay() {
+  isPlaying = !isPlaying;
+  document.getElementById('playIcon').textContent = isPlaying ? '⏸' : '▶';
+  document.getElementById('playText').textContent = isPlaying ? 'Pause' : 'Play Year';
+  document.getElementById('playBtn').classList.toggle('playing', isPlaying);
+  if (isPlaying) playInterval = setInterval(() => setMonth((currentMonth + 1) % 12), 1500);
+  else clearInterval(playInterval);
+}
+
+(function init() {
+  const bar = document.getElementById('monthBar');
+  MONTHS.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'month-btn' + (i === currentMonth ? ' active' : '');
+    btn.textContent = m;
+    btn.onclick = () => { if (isPlaying) togglePlay(); setMonth(i); };
+    bar.appendChild(btn);
+  });
+  setMonth(currentMonth);
+  anim.sunAngle = target.sunAngle;
+  anim.rowSun = [...target.rowSun];
+  anim.shadowDropCm = target.shadowDropCm;
+  anim.rowOffsets = [...target.rowOffsets];
+  anim.rowLips = [...target.rowLips];
+
+  // Orientation buttons
+  document.querySelectorAll('.orient-btn').forEach(btn => {
+    btn.onclick = () => setOrientation(btn.dataset.dir);
+  });
+  setOrientation('S');
+
+  updateYearly();
+  tick();
+})();
+</script>
+</body>
+</html>
