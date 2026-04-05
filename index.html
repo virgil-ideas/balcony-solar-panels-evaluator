@@ -120,7 +120,7 @@
   }
   canvas {
     width: 145%; height: auto; display: block; border-radius: 10px;
-    margin-top: -18%; margin-left: -2%;
+    margin-top: -42%; margin-left: -2%;
   }
 
   .breakdown {
@@ -272,7 +272,7 @@
 
 <div class="container">
   <h1>Balcony Solar Shading</h1>
-  <p class="subtitle">Your 4.78m balcony at <span id="latLabel">45°N</span> · 5 rows · stepped pyramid offset</p>
+  <p class="subtitle">Your <span id="balconyLabel">4.78m</span> balcony at <span id="latLabel">45°N</span> · 5 rows · stepped pyramid offset</p>
 
   <div class="month-bar" id="monthBar"></div>
 
@@ -297,6 +297,12 @@
         </div>
         <div class="slider-ticks">
           <span>10cm</span><span>25</span><span>50</span><span>75</span><span>100cm</span>
+        </div>
+        <div class="lat-row">
+          <span class="slider-label">Row<br>gap</span>
+          <input type="range" id="gapSlider" min="0" max="3" step="0.5" value="0"
+                 oninput="onRowGap(this.value)">
+          <span class="lat-value" id="gapValue" style="min-width:40px">0cm</span>
         </div>
       </div>
 
@@ -357,6 +363,12 @@
   <div class="bottom-layout">
     <div class="breakdown">
       <div class="breakdown-title">Output by Row (parallel wired)</div>
+      <div class="lat-row" style="margin-top:0; padding-top:0; border-top:none; margin-bottom:12px;">
+        <span class="slider-label">Balcony<br>length</span>
+        <input type="range" id="balconySlider" min="1" max="10" step="0.1" value="4.78"
+               oninput="onBalconyLength(this.value)">
+        <span class="lat-value" id="balconyValue" style="min-width:52px">4.78m</span>
+      </div>
       <div id="rowBars"></div>
       <div class="total-row">
         <span class="total-label">Total effective output</span>
@@ -379,7 +391,8 @@ let SUN_ELEVATIONS = [24, 31, 40, 51, 60, 68, 65, 57, 47, 36, 27, 22];
 const NUM_ROWS = 5;
 const PANEL_HEIGHT_CM = 20;
 const PANEL_TILT_DEG = 30;
-const NAMEPLATE_PER_ROW = 375;
+let balconyLengthM = 4.78;
+let NAMEPLATE_PER_ROW = Math.round(balconyLengthM / 0.32) * 25; // ~32cm per panel, 25W each
 const PANEL_THICKNESS = 5;
 const BASE_PROTRUSION_CM = PANEL_HEIGHT_CM * Math.sin(PANEL_TILT_DEG * Math.PI / 180); // ~9cm
 const ROW_HEIGHT_CM = PANEL_HEIGHT_CM * Math.cos(PANEL_TILT_DEG * Math.PI / 180); // ~15.6cm
@@ -483,6 +496,15 @@ const ORIENT_FACTORS = {
 let orientation = 'S';
 let latitude = 45;
 
+function onBalconyLength(val) {
+  balconyLengthM = parseFloat(val);
+  NAMEPLATE_PER_ROW = Math.round(balconyLengthM / 0.32) * 25;
+  document.getElementById('balconyValue').textContent = balconyLengthM.toFixed(1) + 'm';
+  document.getElementById('balconyLabel').textContent = balconyLengthM.toFixed(1) + 'm';
+  recalc();
+  updateYearly();
+}
+
 function onLatitude(val) {
   latitude = parseInt(val);
   document.getElementById('latValue').textContent = latitude + '°N';
@@ -509,6 +531,7 @@ let currentMonth = 5;
 let isPlaying = false;
 let playInterval = null;
 let maxLipCm = 10;
+let rowGapCm = 0;
 
 // Per-row offsets from the railing (additional offset, not counting panel tilt)
 function calcRowOffsets(maxLip) {
@@ -545,7 +568,8 @@ function calcShading(sunElevDeg, maxLip) {
     if (i === 0) {
       rowSun.push(1.0);
     } else {
-      const H = Math.max(0, lips[i - 1] - offsets[i]); // effective overhang
+      const gapShift = tanSun > 0 ? rowGapCm / tanSun : 0;
+      const H = Math.max(0, lips[i - 1] - offsets[i] - gapShift); // effective overhang minus gap
       if (H <= 0) {
         rowSun.push(1.0); // row is further out than the lip above — no shadow
       } else {
@@ -579,6 +603,13 @@ function setMonth(m) {
 function onSlider(val) {
   maxLipCm = parseInt(val);
   document.getElementById('sliderValue').textContent = maxLipCm + 'cm';
+  recalc();
+  updateYearly();
+}
+
+function onRowGap(val) {
+  rowGapCm = parseFloat(val);
+  document.getElementById('gapValue').textContent = rowGapCm + 'cm';
   recalc();
   updateYearly();
 }
@@ -767,9 +798,10 @@ function draw() {
   ctx.setLineDash([]);
 
   // Build panels with per-row offsets (stepped pyramid)
+  const gapPx = rowGapCm * sc;
   const panels = [];
   for (let i = 0; i < NUM_ROWS; i++) {
-    const yTop = railTop + i * pVertPx + 8;
+    const yTop = railTop + i * (pVertPx + gapPx) + 8;
     const yBot = yTop + pVertPx;
     const offsetPx = anim.rowOffsets[i] * sc;
 
@@ -828,11 +860,6 @@ function draw() {
 
   // Ghost output label — full nameplate but reduced by tilt correction (worse angle)
   const ghostCorrection = GHOST_TILT_CORRECTION[currentMonth];
-  const ghostWatts = Math.round(NAMEPLATE_PER_ROW * NUM_ROWS * ghostCorrection);
-  ctx.fillStyle = isLight ? '#887040' : 'rgba(255,217,107,0.5)';
-  ctx.font = '500 12px "JetBrains Mono", monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText(`(${ghostWatts}W — 15° tilt)`, ghostBR.x + 15, (ghostTL.y + ghostBL.y) / 2 + 4);
 
   // Ghost B: fully vertical panel, flush against railing
   const gvTop = railTop + 8;
@@ -871,13 +898,7 @@ function draw() {
   ctx.fillText('0cm (vertical)', railX + 10, gvBL.y + 14);
   ctx.globalAlpha = 1;
 
-  // Vertical ghost output
   const gvCorrection = GHOST_V_TILT_CORRECTION[currentMonth];
-  const gvWatts = Math.round(NAMEPLATE_PER_ROW * NUM_ROWS * gvCorrection);
-  ctx.fillStyle = isLight ? '#448844' : 'rgba(91,219,138,0.5)';
-  ctx.font = '500 12px "JetBrains Mono", monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText(`(${gvWatts}W — vertical, 0cm lip)`, gvTL.x - 10, (gvTL.y + gvBL.y) / 2 + 4);
 
   // Bracket lines from railing to each panel (mounting arms)
   for (let i = 0; i < NUM_ROWS; i++) {
