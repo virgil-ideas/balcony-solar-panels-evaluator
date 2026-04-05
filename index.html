@@ -118,7 +118,10 @@
     background: var(--bg3); border: 1px solid var(--border2); border-radius: 16px;
     padding: 12px; margin-bottom: 16px; overflow: hidden; transition: background 0.4s, border-color 0.4s;
   }
-  canvas { width: 100%; height: auto; display: block; border-radius: 10px; }
+  canvas {
+    width: 145%; height: auto; display: block; border-radius: 10px;
+    margin-top: -18%; margin-left: -2%;
+  }
 
   .breakdown {
     background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
@@ -208,13 +211,68 @@
     background: var(--acc-blue); color: #fff; border-color: var(--acc-blue); font-weight: 600;
   }
   .orient-spacer { visibility: hidden; }
+
+  /* Latitude row inside orient section */
+  .lat-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .lat-row .slider-label { white-space: nowrap; }
+  .lat-row input[type="range"] { flex: 1; }
+  .lat-row .lat-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600;
+    color: var(--acc-blue); min-width: 40px; text-align: right;
+  }
+
+  /* Desktop two-column layout */
+  .main-layout { display: contents; }
+  .sidebar { display: contents; }
+  .bottom-layout { }
+
+  @media (min-width: 960px) {
+    .container { max-width: 1200px; }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      grid-template-areas: "canvas sidebar";
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .scene-wrapper { grid-area: canvas; margin-bottom: 0; }
+    .sidebar {
+      grid-area: sidebar;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .sidebar .slider-section { margin-bottom: 12px; }
+    .sidebar .orient-section { margin-bottom: 12px; }
+    .sidebar .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    .sidebar .yearly-box { margin-top: 0; margin-bottom: 12px; }
+
+    .bottom-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas: "breakdown insight";
+      gap: 16px;
+    }
+    .breakdown { grid-area: breakdown; }
+    .insight-box { grid-area: insight; }
+  }
 </style>
 </head>
 <body>
 
 <div class="container">
   <h1>Balcony Solar Shading</h1>
-  <p class="subtitle">Your 4.78m balcony in Romania · 5 rows · stepped pyramid offset</p>
+  <p class="subtitle">Your 4.78m balcony at <span id="latLabel">45°N</span> · 5 rows · stepped pyramid offset</p>
 
   <div class="month-bar" id="monthBar"></div>
 
@@ -227,84 +285,96 @@
     </button>
   </div>
 
-  <div class="slider-section">
-    <div class="slider-header">
-      <span class="slider-label">Max lip (bottom row)</span>
-      <span class="slider-value" id="sliderValue">10cm</span>
+  <div class="main-layout">
+    <div class="sidebar">
+      <div class="slider-section">
+        <div class="slider-header">
+          <span class="slider-label">Max lip (bottom row)</span>
+          <span class="slider-value" id="sliderValue">10cm</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" id="lipSlider" min="10" max="100" step="5" value="10" oninput="onSlider(this.value)">
+        </div>
+        <div class="slider-ticks">
+          <span>10cm</span><span>25</span><span>50</span><span>75</span><span>100cm</span>
+        </div>
+      </div>
+
+      <div class="orient-section">
+        <div class="orient-header">
+          <span>Balcony faces</span>
+          <span class="orient-factor" id="orientFactor">100%</span>
+        </div>
+        <div class="orient-grid" id="orientGrid">
+          <button class="orient-btn" data-dir="NW">NW</button>
+          <button class="orient-btn" data-dir="N">N</button>
+          <button class="orient-btn" data-dir="NE">NE</button>
+          <button class="orient-btn" data-dir="W">W</button>
+          <button class="orient-spacer"></button>
+          <button class="orient-btn" data-dir="E">E</button>
+          <button class="orient-btn" data-dir="SW">SW</button>
+          <button class="orient-btn active" data-dir="S">S</button>
+          <button class="orient-btn" data-dir="SE">SE</button>
+        </div>
+        <div class="lat-row">
+          <span class="slider-label">Latitude</span>
+          <input type="range" id="latSlider" min="25" max="65" step="1" value="45"
+                 oninput="onLatitude(this.value)">
+          <span class="lat-value" id="latValue">45°N</span>
+        </div>
+      </div>
+
+      <div class="yearly-box">
+        <div class="yearly-label">Estimated Yearly Production</div>
+        <div id="yearlyTable"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value" id="sunAngle" style="color:#ffd96b">68°</div>
+          <div class="stat-label">Sun Elev.</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="shadowDrop" style="color:#ff6b8a">25cm</div>
+          <div class="stat-label">Shadow Drop</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="totalOutput" style="color:#5bdb8a">800W</div>
+          <div class="stat-label">Effective</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="efficiency" style="color:#5bb8ff">43%</div>
+          <div class="stat-label">Efficiency</div>
+        </div>
+      </div>
     </div>
-    <div class="slider-wrap">
-      <input type="range" id="lipSlider" min="10" max="100" step="5" value="10" oninput="onSlider(this.value)">
-    </div>
-    <div class="slider-ticks">
-      <span>10cm</span><span>25</span><span>50</span><span>75</span><span>100cm</span>
+
+    <div class="scene-wrapper">
+      <canvas id="scene" width="1000" height="1000"></canvas>
     </div>
   </div>
 
-  <div class="orient-section">
-    <div class="orient-header">
-      <span>Balcony faces</span>
-      <span class="orient-factor" id="orientFactor">100%</span>
+  <div class="bottom-layout">
+    <div class="breakdown">
+      <div class="breakdown-title">Output by Row (parallel wired)</div>
+      <div id="rowBars"></div>
+      <div class="total-row">
+        <span class="total-label">Total effective output</span>
+        <span class="total-value" id="totalWatts">800W</span>
+      </div>
+      <div class="wiring-note">Rows wired in parallel — each row contributes independently</div>
     </div>
-    <div class="orient-grid" id="orientGrid">
-      <button class="orient-btn" data-dir="NW">NW</button>
-      <button class="orient-btn" data-dir="N">N</button>
-      <button class="orient-btn" data-dir="NE">NE</button>
-      <button class="orient-btn" data-dir="W">W</button>
-      <button class="orient-spacer"></button>
-      <button class="orient-btn" data-dir="E">E</button>
-      <button class="orient-btn" data-dir="SW">SW</button>
-      <button class="orient-btn active" data-dir="S">S</button>
-      <button class="orient-btn" data-dir="SE">SE</button>
-    </div>
-  </div>
 
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-value" id="sunAngle" style="color:#ffd96b">68°</div>
-      <div class="stat-label">Sun Elev.</div>
+    <div class="insight-box">
+      <h3 id="insightTitle" style="color:#ffd96b">Insight</h3>
+      <p id="insightText"></p>
     </div>
-    <div class="stat">
-      <div class="stat-value" id="shadowDrop" style="color:#ff6b8a">25cm</div>
-      <div class="stat-label">Shadow Drop</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="totalOutput" style="color:#5bdb8a">800W</div>
-      <div class="stat-label">Effective</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="efficiency" style="color:#5bb8ff">43%</div>
-      <div class="stat-label">Efficiency</div>
-    </div>
-  </div>
-
-  <div class="scene-wrapper">
-    <canvas id="scene" width="1200" height="750"></canvas>
-  </div>
-
-  <div class="breakdown">
-    <div class="breakdown-title">Output by Row (parallel wired)</div>
-    <div id="rowBars"></div>
-    <div class="total-row">
-      <span class="total-label">Total effective output</span>
-      <span class="total-value" id="totalWatts">800W</span>
-    </div>
-    <div class="wiring-note">Rows wired in parallel — each row contributes independently</div>
-  </div>
-
-  <div class="insight-box">
-    <h3 id="insightTitle" style="color:#ffd96b">Insight</h3>
-    <p id="insightText"></p>
-  </div>
-
-  <div class="yearly-box">
-    <div class="yearly-label">Estimated Yearly Production</div>
-    <div id="yearlyTable"></div>
   </div>
 </div>
 
 <script>
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const SUN_ELEVATIONS = [24, 31, 40, 51, 60, 68, 65, 57, 47, 36, 27, 22];
+let SUN_ELEVATIONS = [24, 31, 40, 51, 60, 68, 65, 57, 47, 36, 27, 22];
 
 const NUM_ROWS = 5;
 const PANEL_HEIGHT_CM = 20;
@@ -317,9 +387,63 @@ const ROW_HEIGHT_CM = PANEL_HEIGHT_CM * Math.cos(PANEL_TILT_DEG * Math.PI / 180)
 const canvas = document.getElementById('scene');
 const ctx = canvas.getContext('2d');
 
-// Average peak sun hours per day for south-facing ~30° tilt at 45°N Romania
-const PEAK_SUN_HOURS = [1.5, 2.2, 3.3, 4.5, 5.2, 5.6, 5.4, 4.8, 3.9, 2.8, 1.7, 1.2];
+// Average peak sun hours per day for south-facing ~30° tilt (baseline: 45°N Romania)
+let PEAK_SUN_HOURS = [1.5, 2.2, 3.3, 4.5, 5.2, 5.6, 5.4, 4.8, 3.9, 2.8, 1.7, 1.2];
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+// Representative day-of-year for each month's midpoint (Klein 1977)
+const DOY_MID = [17, 47, 75, 105, 135, 162, 198, 228, 258, 288, 318, 344];
+const BASELINE_PSH_45N = [1.5, 2.2, 3.3, 4.5, 5.2, 5.6, 5.4, 4.8, 3.9, 2.8, 1.7, 1.2];
+
+function dayLength(latDeg, monthIndex) {
+  const decl = -23.44 * Math.cos((360 / 365) * (DOY_MID[monthIndex] + 10) * Math.PI / 180);
+  const latRad = latDeg * Math.PI / 180;
+  const declRad = decl * Math.PI / 180;
+  const cosHA = -Math.tan(latRad) * Math.tan(declRad);
+  if (cosHA <= -1) return 24;  // polar day
+  if (cosHA >= 1) return 0;    // polar night
+  return (2 / 15) * (Math.acos(cosHA) * 180 / Math.PI);
+}
+
+function computeSunElevations(latDeg) {
+  return DOY_MID.map(doy => {
+    const decl = -23.44 * Math.cos((360 / 365) * (doy + 10) * Math.PI / 180);
+    return Math.max(0, Math.round(90 - Math.abs(latDeg - decl)));
+  });
+}
+
+function computePeakSunHours(latDeg) {
+  const refElev = computeSunElevations(45);
+  const newElev = computeSunElevations(latDeg);
+  return BASELINE_PSH_45N.map((refPSH, m) => {
+    const refDay = dayLength(45, m);
+    const newDay = dayLength(latDeg, m);
+    const dayRatio = refDay > 0 ? newDay / refDay : 0;
+    const refSin = Math.sin(refElev[m] * Math.PI / 180);
+    const newSin = Math.sin(newElev[m] * Math.PI / 180);
+    const atmRatio = (refSin > 0.05 && newSin > 0.05)
+      ? Math.pow(newSin / refSin, 0.4)
+      : (newSin > 0.05 ? 0.5 : 0);
+    return Math.max(0, +(refPSH * dayRatio * atmRatio).toFixed(2));
+  });
+}
+
+function recomputeSolarData() {
+  SUN_ELEVATIONS = computeSunElevations(latitude);
+  PEAK_SUN_HOURS = computePeakSunHours(latitude);
+  GHOST_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
+    const smallPanelAngle = (elev - 60) * Math.PI / 180;
+    const ghostAngle = (elev - 75) * Math.PI / 180;
+    const ratio = Math.cos(ghostAngle) / Math.cos(smallPanelAngle);
+    return Math.max(0, Math.min(1.05, ratio));
+  });
+  GHOST_V_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
+    const smallPanelAngle = (elev - 60) * Math.PI / 180;
+    const vertAngle = (elev - 90) * Math.PI / 180;
+    const ratio = Math.cos(vertAngle) / Math.cos(smallPanelAngle);
+    return Math.max(0, Math.min(1.05, ratio));
+  });
+}
 
 // Ghost single panel A: realistic 15° from vertical
 const GHOST_TILT_DEG = 15;
@@ -333,7 +457,7 @@ const GHOST_V_PROTRUSION_CM = 0;
 const GHOST_V_VERT_CM = 100;
 
 // Tilt correction for 15° ghost: cos(θ - 75°) / cos(θ - 60°)
-const GHOST_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
+let GHOST_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
   const smallPanelAngle = (elev - 60) * Math.PI / 180;
   const ghostAngle = (elev - 75) * Math.PI / 180;
   const ratio = Math.cos(ghostAngle) / Math.cos(smallPanelAngle);
@@ -341,7 +465,7 @@ const GHOST_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
 });
 
 // Tilt correction for vertical ghost: cos(θ - 90°) / cos(θ - 60°)
-const GHOST_V_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
+let GHOST_V_TILT_CORRECTION = SUN_ELEVATIONS.map(elev => {
   const smallPanelAngle = (elev - 60) * Math.PI / 180;
   const vertAngle = (elev - 90) * Math.PI / 180;
   const ratio = Math.cos(vertAngle) / Math.cos(smallPanelAngle);
@@ -357,6 +481,16 @@ const ORIENT_FACTORS = {
   NW: 0.45, NE: 0.45, N: 0.35
 };
 let orientation = 'S';
+let latitude = 45;
+
+function onLatitude(val) {
+  latitude = parseInt(val);
+  document.getElementById('latValue').textContent = latitude + '°N';
+  document.getElementById('latLabel').textContent = latitude + '°N';
+  recomputeSolarData();
+  recalc();
+  updateYearly();
+}
 
 function setOrientation(dir) {
   orientation = dir;
@@ -617,7 +751,7 @@ function draw() {
   ctx.fillStyle = labelCol; ctx.font = '500 11px "DM Sans", sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('Balcony', (30 + railX) / 2, railBot + 42);
   ctx.fillStyle = dimCol;
-  ctx.fillText('Outside (south →)', railX + 250, railBot + 42);
+  ctx.fillText(`Outside (${orientation.toLowerCase()} →)`, railX + 250, railBot + 42);
 
   // Railing
   ctx.strokeStyle = railCol; ctx.lineWidth = 6; ctx.lineCap = 'round';
@@ -882,7 +1016,7 @@ function draw() {
   ctx.fillText(`${Math.round(anim.rowLips[NUM_ROWS-1])}cm max lip`, (railX + lastP.br.x) / 2, indY + 18);
 
   // Sun arc
-  const acX = W - 180, acY = railBot + 20, acR = 90;
+  const acX = Math.round(W * 0.55), acY = railBot + 20, acR = 90;
   ctx.strokeStyle = 'rgba(255,217,107,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
   ctx.beginPath(); ctx.arc(acX, acY, acR, -Math.PI, 0); ctx.stroke();
   ctx.setLineDash([]);
@@ -998,6 +1132,7 @@ function togglePlay() {
     btn.onclick = () => setOrientation(btn.dataset.dir);
   });
   setOrientation('S');
+  recomputeSolarData();
 
   updateYearly();
   tick();
